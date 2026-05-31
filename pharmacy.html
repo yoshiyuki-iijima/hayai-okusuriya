@@ -285,9 +285,11 @@ function updateClock(){
 setInterval(updateClock,1000);updateClock();
 
 // =============== TOP SCREEN ================
-(function buildTop(){
+function buildTop(){
   const grid=document.getElementById('pharma-grid');
-  PHARMACIES.forEach((p,i)=>{
+  if(!grid) return;
+  grid.innerHTML='';
+  PHARMACIES.forEach((p)=>{
     const d=document.createElement('div');
     d.className='pharma-tile';
     d.innerHTML=`
@@ -299,7 +301,8 @@ setInterval(updateClock,1000);updateClock();
     d.onclick=()=>enterPharma(p);
     grid.appendChild(d);
   });
-})();
+}
+document.addEventListener('DOMContentLoaded', buildTop);
 
 function enterPharma(p){
   currentPharma=p;
