@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>はやいおくすりやさん</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+:root{--green:#00a86b;--green-dk:#007a4e;--green-lt:#e6f7f1;--accent:#ff6b35;--bg:#f5f7fa;--card:#fff;--text:#1a1a2e;--sub:#6b7280;--border:#e5e7eb;--danger:#ef4444;--warn:#f59e0b;--ok:#10b981}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto}
+.screen{min-height:100vh;display:flex;flex-direction:column}
+.login-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:linear-gradient(160deg,#00a86b,#007a4e)}
+.login-logo{font-size:2.8rem;margin-bottom:8px}
+.login-title{color:#fff;font-size:1.5rem;font-weight:800;letter-spacing:.04em;margin-bottom:4px}
+.login-sub{color:rgba(255,255,255,.75);font-size:.85rem;margin-bottom:40px}
+.login-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.form-label{font-size:.75rem;font-weight:700;color:var(--sub);margin-bottom:6px;letter-spacing:.05em}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:1rem;outline:none;transition:border .2s;margin-bottom:16px}
+.form-input:focus{border-color:var(--green)}
+.btn-primary{width:100%;background:var(--green);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-primary:hover{background:var(--green-dk)}
+.error-msg{color:var(--danger);font-size:.82rem;margin-top:10px;text-align:center}
+.app-header{background:var(--green);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,168,107,.18)}
+.header-title{font-size:1.05rem;font-weight:800;letter-spacing:.03em}
+.header-icon-btn{background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.back-btn{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:4px}
+.bottom-nav{background:#fff;border-top:1px solid var(--border);display:flex;position:sticky;bottom:0;z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;border:none;background:none;cursor:pointer;color:var(--sub);font-size:.7rem;font-weight:600;gap:3px;transition:color .2s}
+.nav-btn.active{color:var(--green)}
+.nav-btn .nav-icon{font-size:1.4rem}
+.tab-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+.content-area{flex:1;overflow-y:auto;padding:0 0 80px}
+.section-title{font-size:.8rem;font-weight:700;color:var(--sub);letter-spacing:.06em;padding:16px 16px 8px;text-transform:uppercase}
+.sent-banner{margin:12px 16px;background:linear-gradient(135deg,#00a86b,#007a4e);border-radius:16px;padding:14px 16px;color:#fff}
+.sent-banner-title{font-size:.7rem;font-weight:700;opacity:.85;margin-bottom:4px;letter-spacing:.06em}
+.sent-banner-pharma{font-size:1rem;font-weight:800;margin-bottom:10px}
+.countdown-row{display:flex;align-items:center;gap:10px}
+.countdown-label{font-size:.75rem;opacity:.8}
+.countdown-time{font-size:2rem;font-weight:900;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.countdown-min{font-size:.9rem;font-weight:700;opacity:.85}
+.status-badge{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;margin-top:8px}
+.pharma-card{background:var(--card);margin:6px 16px;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;transition:transform .15s,box-shadow .15s;border:1.5px solid transparent;animation:fadeUp .25s ease both}
+.pharma-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,168,107,.15);border-color:var(--green)}
+.pharma-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;flex-shrink:0}
+.rank-1{background:#ffd700;color:#7a5f00}.rank-2{background:#c0c0c0;color:#4a4a4a}.rank-3{background:#cd7f32;color:#fff}.rank-n{background:var(--green-lt);color:var(--green-dk)}
+.pharma-info{flex:1;min-width:0}
+.pharma-name{font-size:.92rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pharma-meta{display:flex;gap:10px;margin-top:4px}
+.meta-tag{font-size:.72rem;color:var(--sub);display:flex;align-items:center;gap:3px}
+.wait-badge{padding:4px 10px;border-radius:20px;font-size:.78rem;font-weight:800;flex-shrink:0}
+.wait-low{background:#d1fae5;color:#065f46}.wait-mid{background:#fef3c7;color:#92400e}.wait-high{background:#fee2e2;color:#991b1b}
+.detail-hero{background:linear-gradient(135deg,var(--green),var(--green-dk));padding:24px 20px 32px;color:#fff}
+.detail-name{font-size:1.3rem;font-weight:800;margin-bottom:6px}
+.detail-address{font-size:.82rem;opacity:.85;margin-bottom:16px}
+.detail-stats{display:flex;gap:12px}
+.stat-card{background:rgba(255,255,255,.18);border-radius:12px;padding:10px 16px;flex:1;text-align:center}
+.stat-val{font-size:1.6rem;font-weight:900}
+.stat-unit{font-size:.7rem;opacity:.8}
+.stat-label{font-size:.7rem;opacity:.75;margin-top:2px}
+.detail-body{padding:20px 16px}
+.info-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+.info-icon{font-size:1.2rem;width:28px;text-align:center}
+.info-text{font-size:.9rem}
+.btn-camera{width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px;font-size:1.05rem;font-weight:800;cursor:pointer;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-camera:hover{background:#e55a25}
+.camera-overlay{position:fixed;inset:0;background:#000;z-index:200;display:flex;flex-direction:column}
+.camera-header{padding:16px;display:flex;align-items:center;justify-content:space-between}
+.camera-title{color:#fff;font-weight:700;font-size:1rem}
+.btn-close{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:36px;height:36px;font-size:1.2rem;cursor:pointer}
+.camera-view{flex:1;position:relative;overflow:hidden}
+.camera-view video{width:100%;height:100%;object-fit:cover;background:#111}
+.camera-guide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.guide-frame{width:85%;height:55%;border:2.5px solid rgba(255,255,255,.7);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45)}
+.camera-hint{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:rgba(255,255,255,.8);font-size:.8rem}
+.camera-controls{padding:24px 16px;display:flex;align-items:center;justify-content:center}
+.btn-shutter{width:70px;height:70px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,.5);cursor:pointer;transition:transform .1s}
+.btn-shutter:active{transform:scale(.92)}
+.preview-overlay{position:fixed;inset:0;background:#000;z-index:300;display:flex;flex-direction:column}
+.preview-img{flex:1;object-fit:contain;width:100%}
+.preview-actions{padding:20px 24px;background:rgba(0,0,0,.6)}
+.preview-q{color:#fff;text-align:center;font-size:1rem;font-weight:700;margin-bottom:16px}
+.preview-btns{display:flex;gap:12px}
+.btn-retry{flex:1;background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:12px;padding:14px;font-size:.95rem;font-weight:700;cursor:pointer}
+.btn-send{flex:1;background:var(--green);color:#fff;border:none;border-radius:12px;padding:14px;font-size:.95rem;font-weight:800;cursor:pointer}
+.success-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:flex;align-items:center;justify-content:center;padding:24px}
+.success-card{background:#fff;border-radius:20px;padding:32px 24px;text-align:center;width:100%;max-width:320px}
+.success-icon{font-size:3.5rem;margin-bottom:12px}
+.success-title{font-size:1.2rem;font-weight:800;color:var(--green);margin-bottom:8px}
+.success-msg{font-size:.88rem;color:var(--sub);line-height:1.6}
+.btn-ok{background:var(--green);color:#fff;border:none;border-radius:12px;padding:14px 40px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:20px}
+.history-item{background:var(--card);margin:8px 16px;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.history-pharma{font-size:.92rem;font-weight:700}
+.history-date{font-size:.75rem;color:var(--sub);margin-top:4px}
+.history-status{display:inline-block;background:var(--green-lt);color:var(--green-dk);border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;margin-top:6px}
+.profile-header{background:var(--green);padding:28px 20px;text-align:center;color:#fff}
+.profile-avatar{font-size:3rem;margin-bottom:8px}
+.profile-name{font-size:1.2rem;font-weight:800}
+.profile-form{padding:16px}
+.field-group{background:var(--card);border-radius:14px;padding:4px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.field-row{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.field-row:last-child{border-bottom:none}
+.field-label{font-size:.78rem;color:var(--sub);font-weight:700;width:90px;flex-shrink:0}
+.field-input{flex:1;border:none;outline:none;font-size:.9rem;background:transparent}
+.field-select{flex:1;border:none;outline:none;font-size:.9rem;background:transparent;-webkit-appearance:none;appearance:none}
+.textarea-field{width:100%;border:none;outline:none;font-size:.9rem;background:transparent;resize:none;min-height:60px;padding:4px 0;font-family:inherit}
+.btn-save{width:100%;background:var(--green);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer;margin:8px 0 24px}
+.empty-state{text-align:center;padding:48px 16px;color:var(--sub)}
+.empty-icon{font-size:3rem;margin-bottom:12px}
+canvas{display:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<canvas id="snapCanvas"></canvas>
+<script>
+const {useState,useEffect,useRef}=React;
+const PHARMA_LIST=[
+  {id:1,name:'ファーマシィ薬局 大蔵',dist:130,wait:45,address:'東京都世田谷区大蔵2-10-1',tel:'03-3417-XXXX'},
+  {id:2,name:'砧3丁目薬局',dist:160,wait:15,address:'東京都世田谷区砧3-8-4',tel:'03-3417-XXXX'},
+  {id:3,name:'クリエイト薬局',dist:200,wait:20,address:'東京都世田谷区砧6-4-2',tel:'03-3417-XXXX'},
+  {id:4,name:'日本調剤 砧薬局',dist:220,wait:40,address:'東京都世田谷区砧1-7-10',tel:'03-3417-XXXX'},
+  {id:5,name:'ヤマグチ薬局砧店',dist:800,wait:10,address:'東京都世田谷区砧4-3-6',tel:'03-3417-XXXX'},
+  {id:6,name:'南山堂薬局 砧店',dist:850,wait:10,address:'東京都世田谷区砧2-21-9',tel:'03-3417-XXXX'},
+  {id:7,name:'ココカラファイン砧世田谷通り店',dist:350,wait:30,address:'東京都世田谷区砧5-1-12',tel:'03-3417-XXXX'},
+  {id:8,name:'マツモトキヨシ成城学園前',dist:1800,wait:20,address:'東京都世田谷区成城6-10-14',tel:'03-3482-XXXX'},
+].sort((a,b)=>a.dist-b.dist);
+function wc(m){return m<=15?'wait-low':m<=30?'wait-mid':'wait-high'}
+
+function App(){
+  const[screen,setScreen]=useState('login');
+  const[lid,setLid]=useState('');
+  const[lpass,setLpass]=useState('');
+  const[lerr,setLerr]=useState('');
+  const[sel,setSel]=useState(null);
+  const[tab,setTab]=useState('home');
+  const[sent,setSent]=useState(null);
+  const[hist,setHist]=useState([]);
+  const[camOpen,setCamOpen]=useState(false);
+  const[preview,setPreview]=useState(null);
+  const[success,setSuccess]=useState(false);
+  const[prof,setProf]=useState({name:'',kana:'',address:'',tel:'',gender:'',generic:'使用する',allergy:''});
+  const[cd,setCd]=useState(0);
+  const tiRef=useRef(null);
+
+  useEffect(()=>{
+    if(sent){
+      setCd(sent.remaining*60);
+      tiRef.current=setInterval(()=>setCd(p=>{if(p<=1){clearInterval(tiRef.current);return 0;}return p-1;}),1000);
+    }
+    return()=>clearInterval(tiRef.current);
+  },[sent]);
+
+  const fmt=s=>{const m=Math.floor(s/60),sc=s%60;return`${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`};
+
+  const login=()=>{
+    if(lid==='AD'&&lpass==='0000'){setScreen('main');setLerr('');}
+    else setLerr('IDまたはパスワードが違います');
+  };
+
+  const send=()=>{
+    const now=new Date();
+    const ft=new Date(now.getTime()+sel.wait*60000);
+    const hm=`${ft.getHours()}:${String(ft.getMinutes()).padStart(2,'0')}`;
+    setSent({pharma:sel,time:hm,remaining:sel.wait,sentAt:now.toLocaleString('ja-JP')});
+    setHist(p=>[{id:Date.now(),pharma:sel,time:hm,sentAt:now.toLocaleString('ja-JP')},...p]);
+    setPreview(null);setCamOpen(false);setSuccess(true);
+  };
+
+  if(screen==='login') return React.createElement('div',{className:'screen'},
+    React.createElement('div',{className:'login-wrap'},
+      React.createElement('div',{className:'login-logo'},'💊'),
+      React.createElement('div',{className:'login-title'},'はやいおくすりやさん'),
+      React.createElement('div',{className:'login-sub'},'近くて早い調剤薬局を見つけよう'),
+      React.createElement('div',{className:'login-card'},
+        React.createElement('div',{className:'form-label'},'ユーザーID'),
+        React.createElement('input',{className:'form-input',placeholder:'例：AD',value:lid,onChange:e=>setLid(e.target.value),onKeyDown:e=>e.key==='Enter'&&login()}),
+        React.createElement('div',{className:'form-label'},'パスワード'),
+        React.createElement('input',{className:'form-input',type:'password',placeholder:'••••',value:lpass,onChange:e=>setLpass(e.target.value),onKeyDown:e=>e.key==='Enter'&&login()}),
+        lerr&&React.createElement('div',{className:'error-msg'},'⚠️ '+lerr),
+        React.createElement('button',{className:'btn-primary',onClick:login},'ログイン')
+      )
+    )
+  );
+
+  const goMain=()=>{setScreen('main');setTab('home');};
+
+  return React.createElement('div',{className:'screen'},
+    React.createElement('div',{className:'app-header'},
+      screen==='detail'
+        ?React.createElement('button',{className:'back-btn',onClick:goMain},'←')
+        :React.createElement('span',{style:{width:34}}),
+      React.createElement('span',{className:'header-title'},
+        screen==='detail'
+          ?(sel?.name.length>14?sel.name.substring(0,14)+'…':sel?.name)
+          :'🏥 はやいおくすりやさん'),
+      React.createElement('button',{className:'header-icon-btn',onClick:()=>{setScreen('main');setTab('profile');}},'👤')
+    ),
+    React.createElement('div',{className:'content-area'},
+      screen==='main'&&tab==='home'&&React.createElement(HomeTab,{sent,cd,fmt,onSelect:p=>{setSel(p);setScreen('detail');}}),
+      screen==='main'&&tab==='history'&&React.createElement(HistTab,{list:hist}),
+      screen==='main'&&tab==='profile'&&React.createElement(ProfTab,{prof,setProf}),
+      screen==='detail'&&React.createElement(DetailScreen,{pharma:sel,onCamera:()=>setCamOpen(true)})
+    ),
+    screen==='main'&&React.createElement('div',{className:'bottom-nav'},
+      [['home','🏠','ホーム'],['history','📋','履歴'],['profile','👤','プロフィール']].map(([k,ic,lb])=>
+        React.createElement('button',{key:k,className:'nav-btn'+(tab===k?' active':''),onClick:()=>setTab(k)},
+          React.createElement('span',{className:'nav-icon'},ic),lb,
+          tab===k&&React.createElement('div',{className:'tab-dot'})
+        )
+      )
+    ),
+    camOpen&&React.createElement(CameraScreen,{onClose:()=>setCamOpen(false),onCapture:img=>setPreview(img)}),
+    preview&&React.createElement(PreviewScreen,{img:preview,onRetry:()=>{setPreview(null);setCamOpen(true);},onSend:send}),
+    success&&React.createElement(SuccessOverlay,{pharma:sel,time:sent?.time,onClose:()=>{setSuccess(false);setScreen('main');setTab('home');}})
+  );
+}
+
+function HomeTab({sent,cd,fmt,onSelect}){
+  return React.createElement('div',null,
+    sent&&React.createElement('div',{className:'sent-banner'},
+      React.createElement('div',{className:'sent-banner-title'},'📬 送付済み処方箋'),
+      React.createElement('div',{className:'sent-banner-pharma'},sent.pharma.name),
+      React.createElement('div',{className:'countdown-row'},
+        React.createElement('span',{className:'countdown-label'},'残り待ち時間'),
+        React.createElement('span',{className:'countdown-time'},fmt(cd)),
+        React.createElement('span',{className:'countdown-min'},'分')
+      ),
+      React.createElement('span',{className:'status-badge'},cd>0?'出来上がり予定 '+sent.time:'✅ 準備完了！')
+    ),
+    React.createElement('div',{className:'section-title'},'📍 最寄りの薬局（近い順）'),
+    PHARMA_LIST.map((p,i)=>
+      React.createElement('div',{key:p.id,className:'pharma-card',style:{animationDelay:i*.05+'s'},onClick:()=>onSelect(p)},
+        React.createElement('div',{className:'pharma-rank '+(i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n')},
+          i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1),
+        React.createElement('div',{className:'pharma-info'},
+          React.createElement('div',{className:'pharma-name'},p.name),
+          React.createElement('div',{className:'pharma-meta'},
+            React.createElement('span',{className:'meta-tag'},'📍 '+p.dist+'m'),
+            React.createElement('span',{className:'meta-tag'},'👥 '+Math.ceil(p.wait/5)+'人待ち')
+          )
+        ),
+        React.createElement('div',{className:'wait-badge '+wc(p.wait)},p.wait+'分')
+      )
+    )
+  );
+}
+
+function DetailScreen({pharma,onCamera}){
+  if(!pharma)return null;
+  const ppl=Math.ceil(pharma.wait/5);
+  return React.createElement('div',null,
+    React.createElement('div',{className:'detail-hero'},
+      React.createElement('div',{className:'detail-name'},pharma.name),
+      React.createElement('div',{className:'detail-address'},'📍 '+pharma.address),
+      React.createElement('div',{className:'detail-stats'},
+        [{v:pharma.dist,u:'m',l:'現在地から'},{v:pharma.wait,u:'分',l:'待ち時間'},{v:ppl,u:'人',l:'待ち人数'}].map(({v,u,l},i)=>
+          React.createElement('div',{key:i,className:'stat-card'},
+            React.createElement('div',{className:'stat-val'},v,React.createElement('span',{className:'stat-unit'},u)),
+            React.createElement('div',{className:'stat-label'},l)
+          )
+        )
+      )
+    ),
+    React.createElement('div',{className:'detail-body'},
+      [['📞',pharma.tel],['🕐','営業中 9:00〜19:00'],['💊','調剤・OTC・健康相談']].map(([ic,tx],i)=>
+        React.createElement('div',{key:i,className:'info-row'},
+          React.createElement('span',{className:'info-icon'},ic),
+          React.createElement('span',{className:'info-text'},tx)
+        )
+      ),
+      React.createElement('button',{className:'btn-camera',onClick:onCamera},'📷 処方箋を撮影して送る')
+    )
+  );
+}
+
+function CameraScreen({onClose,onCapture}){
+  const vRef=useRef(null);
+  const stRef=useRef(null);
+  const[rdy,setRdy]=useState(false);
+  useEffect(()=>{
+    let active=true;
+    navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment'},audio:false})
+      .then(s=>{if(!active)return;stRef.current=s;if(vRef.current){vRef.current.srcObject=s;vRef.current.play();setRdy(true);}})
+      .catch(()=>{if(active)setRdy(true);});
+    return()=>{active=false;stRef.current?.getTracks().forEach(t=>t.stop());};
+  },[]);
+  const shoot=()=>{
+    const c=document.getElementById('snapCanvas'),v=vRef.current;
+    if(v&&v.videoWidth>0){
+      c.width=v.videoWidth;c.height=v.videoHeight;
+      c.getContext('2d').drawImage(v,0,0);
+    } else {
+      c.width=400;c.height=300;
+      const ctx=c.getContext('2d');
+      ctx.fillStyle='#f0f0f0';ctx.fillRect(0,0,400,300);
+      ctx.fillStyle='#333';ctx.font='20px sans-serif';ctx.textAlign='center';
+      ctx.fillText('処方箋（デモ）',200,150);
+    }
+    stRef.current?.getTracks().forEach(t=>t.stop());
+    onCapture(c.toDataURL('image/jpeg',.8));
+  };
+  return React.createElement('div',{className:'camera-overlay'},
+    React.createElement('div',{className:'camera-header'},
+      React.createElement('span',{className:'camera-title'},'📷 処方箋を撮影'),
+      React.createElement('button',{className:'btn-close',onClick:()=>{stRef.current?.getTracks().forEach(t=>t.stop());onClose();}},'✕')
+    ),
+    React.createElement('div',{className:'camera-view'},
+      React.createElement('video',{ref:vRef,playsInline:true,muted:true}),
+      React.createElement('div',{className:'camera-guide'},React.createElement('div',{className:'guide-frame'})),
+      React.createElement('div',{className:'camera-hint'},'処方箋を枠内に収めてください')
+    ),
+    React.createElement('div',{className:'camera-controls'},
+      React.createElement('button',{className:'btn-shutter',onClick:shoot,disabled:!rdy})
+    )
+  );
+}
+
+function PreviewScreen({img,onRetry,onSend}){
+  return React.createElement('div',{className:'preview-overlay'},
+    React.createElement('img',{className:'preview-img',src:img,alt:'処方箋プレビュー'}),
+    React.createElement('div',{className:'preview-actions'},
+      React.createElement('div',{className:'preview-q'},'この画像で送信しますか？'),
+      React.createElement('div',{className:'preview-btns'},
+        React.createElement('button',{className:'btn-retry',onClick:onRetry},'📷 撮り直す'),
+        React.createElement('button',{className:'btn-send',onClick:onSend},'✅ OK・送信')
+      )
+    )
+  );
+}
+
+function SuccessOverlay({pharma,time,onClose}){
+  return React.createElement('div',{className:'success-overlay'},
+    React.createElement('div',{className:'success-card'},
+      React.createElement('div',{className:'success-icon'},'🎉'),
+      React.createElement('div',{className:'success-title'},'送信完了！'),
+      React.createElement('div',{className:'success-msg'},
+        React.createElement('b',null,pharma?.name),' に処方箋を送りました。',
+        React.createElement('br'),
+        'お薬の出来上がり予定は ',React.createElement('b',null,time),' 頃です。'
+      ),
+      React.createElement('button',{className:'btn-ok',onClick:onClose},'ホームへ戻る')
+    )
+  );
+}
+
+function HistTab({list}){
+  if(!list.length)return React.createElement('div',{className:'empty-state'},
+    React.createElement('div',{className:'empty-icon'},'📋'),
+    React.createElement('div',null,'まだ送付履歴がありません')
+  );
+  return React.createElement('div',null,
+    React.createElement('div',{className:'section-title'},'過去の送付履歴'),
+    list.map(h=>React.createElement('div',{key:h.id,className:'history-item'},
+      React.createElement('div',{className:'history-pharma'},h.pharma.name),
+      React.createElement('div',{className:'history-date'},'送付日時：'+h.sentAt),
+      React.createElement('div',{className:'history-status'},'✅ 送付済み（出来上がり '+h.time+'）')
+    ))
+  );
+}
+
+function ProfTab({prof,setProf}){
+  const[saved,setSaved]=useState(false);
+  const u=(k,v)=>setProf(p=>({...p,[k]:v}));
+  return React.createElement('div',null,
+    React.createElement('div',{className:'profile-header'},
+      React.createElement('div',{className:'profile-avatar'},'👤'),
+      React.createElement('div',{className:'profile-name'},prof.name||'未設定')
+    ),
+    React.createElement('div',{className:'profile-form'},
+      React.createElement('div',{className:'field-group'},
+        [['name','氏名','山田 太郎','text'],['kana','フリガナ','ヤマダ タロウ','text'],
+         ['address','住所','東京都世田谷区砧...','text'],['tel','電話番号','090-0000-0000','tel']].map(([k,l,ph,t])=>
+          React.createElement('div',{key:k,className:'field-row'},
+            React.createElement('span',{className:'field-label'},l),
+            React.createElement('input',{className:'field-input',placeholder:ph,type:t,value:prof[k],onChange:e=>u(k,e.target.value)})
+          )
+        ),
+        React.createElement('div',{className:'field-row'},
+          React.createElement('span',{className:'field-label'},'性別'),
+          React.createElement('select',{className:'field-select',value:prof.gender,onChange:e=>u('gender',e.target.value)},
+            ['','男性','女性','その他'].map(v=>React.createElement('option',{key:v,value:v},v||'選択してください'))
+          )
+        )
+      ),
+      React.createElement('div',{className:'field-group'},
+        React.createElement('div',{className:'field-row'},
+          React.createElement('span',{className:'field-label'},'ジェネリック'),
+          React.createElement('select',{className:'field-select',value:prof.generic,onChange:e=>u('generic',e.target.value)},
+            ['使用する','使用しない'].map(v=>React.createElement('option',{key:v,value:v},v))
+          )
+        ),
+        React.createElement('div',{className:'field-row',style:{alignItems:'flex-start',paddingTop:12}},
+          React.createElement('span',{className:'field-label',style:{paddingTop:4}},'薬品アレルギー'),
+          React.createElement('textarea',{className:'textarea-field',placeholder:'アレルギーのある薬品があれば入力（任意）',value:prof.allergy,onChange:e=>u('allergy',e.target.value)})
+        )
+      ),
+      React.createElement('button',{className:'btn-save',onClick:()=>{setSaved(true);setTimeout(()=>setSaved(false),2000);}},
+        saved?'✅ 保存しました！':'保存する'
+      )
+    )
+  );
+}
+
+ReactDOM.render(React.createElement(App),document.getElementById('root'));
+</script>
+</body>
+</html>
