@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>はやいおくすりやさん｜薬局管理</title>
+<style>
+:root{
+  --green:#00a86b;--green-dk:#007a4e;--green-lt:#e6f7f1;
+  --accent:#ff6b35;--blue:#1e6fb5;--blue-lt:#e8f2fc;
+  --bg:#f0f4f8;--card:#fff;--text:#1a1a2e;--sub:#6b7280;
+  --border:#e2e8f0;--danger:#ef4444;--warn:#f59e0b;--ok:#10b981;
+  --rad:14px;--rad-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ===== SCREEN SYSTEM ===== */
+.screen{display:none;width:100%;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ===== TOP / SELECTOR ===== */
+.top-header{background:var(--green);color:#fff;padding:18px 32px;
+  display:flex;align-items:center;justify-content:space-between}
+.top-header h1{font-size:1.5rem;font-weight:800;letter-spacing:.04em}
+.top-header .clock{font-size:1rem;font-weight:600;opacity:.85;font-variant-numeric:tabular-nums}
+.pharma-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:36px 40px}
+.pharma-tile{background:var(--card);border-radius:var(--rad);padding:28px 24px;
+  cursor:pointer;border:2px solid transparent;transition:all .15s;
+  box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.pharma-tile:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,168,107,.15)}
+.pharma-tile-icon{font-size:2.2rem;margin-bottom:12px}
+.pharma-tile-name{font-size:.98rem;font-weight:700;margin-bottom:6px;line-height:1.4}
+.pharma-tile-dist{font-size:.78rem;color:var(--sub)}
+.pharma-tile-wait{display:inline-block;margin-top:10px;padding:4px 12px;border-radius:20px;
+  font-size:.8rem;font-weight:700}
+.w-low{background:#d1fae5;color:#065f46}.w-mid{background:#fef3c7;color:#92400e}.w-high{background:#fee2e2;color:#991b1b}
+
+/* ===== MAIN APP ===== */
+.app-layout{display:grid;grid-template-columns:240px 1fr;height:100vh;overflow:hidden}
+.sidebar{background:var(--green-dk);color:#fff;display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo{font-size:1rem;font-weight:800;letter-spacing:.04em;margin-bottom:2px}
+.sidebar-pharma{font-size:.8rem;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-section{padding:14px 16px 6px;font-size:.68rem;letter-spacing:.1em;opacity:.55;font-weight:700}
+.sidebar-btn{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;
+  border-radius:8px;margin:2px 8px;font-size:.88rem;font-weight:600;transition:background .15s;border:none;
+  background:none;color:#fff;width:calc(100% - 16px);text-align:left}
+.sidebar-btn:hover,.sidebar-btn.active{background:rgba(255,255,255,.15)}
+.sidebar-btn .icon{font-size:1.1rem;width:22px;text-align:center}
+.sidebar-bottom{margin-top:auto;padding:16px}
+.btn-back-top{width:100%;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);
+  border-radius:10px;padding:10px;font-size:.85rem;font-weight:700;cursor:pointer}
+.btn-back-top:hover{background:rgba(255,255,255,.22)}
+
+.main-area{display:flex;flex-direction:column;overflow:hidden}
+.main-topbar{background:var(--card);border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;flex-shrink:0}
+.topbar-title{font-size:1.1rem;font-weight:800}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.wait-summary{display:flex;gap:12px}
+.ws-item{background:var(--bg);border-radius:8px;padding:7px 14px;text-align:center}
+.ws-val{font-size:1.3rem;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums;line-height:1}
+.ws-lbl{font-size:.66rem;color:var(--sub);font-weight:600;margin-top:2px}
+.clock-display{font-size:1.1rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+
+.main-content{flex:1;overflow-y:auto;padding:20px 24px}
+
+/* ===== PRESCRIPTION TILES ===== */
+.tiles-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.tiles-label{font-size:.8rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase}
+.tiles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.rx-tile{background:var(--card);border-radius:var(--rad);padding:14px 14px 12px;
+  border:1.5px solid var(--border);transition:border .15s;position:relative;
+  display:flex;flex-direction:column;gap:6px;animation:fadeUp .25s ease both}
+.rx-tile:hover{border-color:var(--green)}
+.rx-tile.urgent{border-color:var(--danger);background:#fff8f8}
+.rx-num{font-size:.62rem;color:var(--sub);font-weight:700;font-variant-numeric:tabular-nums;
+  letter-spacing:.03em;word-break:break-all;line-height:1.3}
+.rx-name{font-size:1rem;font-weight:800;margin-top:2px}
+.rx-elapsed{display:flex;align-items:center;gap:6px}
+.elapsed-bar-wrap{flex:1;background:var(--border);border-radius:4px;height:5px;overflow:hidden}
+.elapsed-bar{height:100%;border-radius:4px;background:var(--green);transition:width .5s}
+.elapsed-bar.warn{background:var(--warn)}.elapsed-bar.danger{background:var(--danger)}
+.elapsed-text{font-size:.72rem;font-weight:700;font-variant-numeric:tabular-nums;
+  color:var(--sub);min-width:36px;text-align:right}
+.rx-btns{display:flex;gap:6px;margin-top:4px}
+.btn-print{flex:1;background:var(--blue-lt);color:var(--blue);border:none;border-radius:8px;
+  padding:7px 4px;font-size:.72rem;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-print:hover{background:#cce0f5}
+.btn-done{flex:1;background:var(--green-lt);color:var(--green-dk);border:none;border-radius:8px;
+  padding:7px 4px;font-size:.72rem;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-done:hover{background:#b2efdc}
+.empty-tile{background:none;border:1.5px dashed var(--border);border-radius:var(--rad);
+  min-height:140px;display:flex;align-items:center;justify-content:center}
+.empty-tile span{font-size:.78rem;color:var(--sub)}
+
+/* ===== LIST SCREEN ===== */
+.list-panel{background:var(--card);border-radius:var(--rad);overflow:hidden}
+.list-toolbar{padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.date-slider-wrap{display:flex;align-items:center;gap:10px}
+.date-slider-wrap label{font-size:.78rem;color:var(--sub);font-weight:700}
+input[type=range]{width:200px}
+.date-label{font-size:.85rem;font-weight:700;color:var(--text);min-width:70px}
+.btn-datepick{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:6px 14px;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-datepick:hover{background:var(--green-lt)}
+input[type=date]{border:1px solid var(--border);border-radius:8px;padding:6px 10px;
+  font-size:.82rem;background:var(--bg)}
+.list-table{width:100%;border-collapse:collapse}
+.list-table th{background:var(--bg);font-size:.75rem;font-weight:700;color:var(--sub);
+  padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);letter-spacing:.04em}
+.list-table td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:.85rem}
+.list-table tr:last-child td{border-bottom:none}
+.list-table tr:hover td{background:var(--bg)}
+.status-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700}
+.st-done{background:#d1fae5;color:#065f46}
+.st-wait{background:#fef3c7;color:#92400e}
+.st-in{background:#dbeafe;color:#1e40af}
+
+/* ===== MODAL ===== */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;
+  display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:var(--rad);padding:24px;width:90%;max-width:640px;
+  max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.modal-header{display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:1rem;font-weight:800}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--sub);padding:4px}
+.rx-preview-img{width:100%;border-radius:8px;border:1px solid var(--border);object-fit:contain;max-height:400px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px}
+.btn-modal-cancel{background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:10px 22px;font-size:.9rem;cursor:pointer}
+.btn-modal-print{background:var(--blue);color:#fff;border:none;border-radius:10px;
+  padding:10px 22px;font-size:.9rem;font-weight:700;cursor:pointer}
+
+/* ===== MISC ===== */
+.section-divider{margin:20px 0 14px;font-size:.8rem;font-weight:700;color:var(--sub);
+  letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-list{background:var(--card);border:1.5px solid var(--border);border-radius:10px;
+  padding:10px 22px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px}
+.btn-list:hover{border-color:var(--green);color:var(--green)}
+.badge-count{background:var(--green);color:#fff;border-radius:20px;
+  padding:2px 8px;font-size:.72rem;font-weight:700}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media print{.no-print{display:none!important}.rx-preview-img{max-height:none;border:none}}
+</style>
+</head>
+<body>
+
+<!-- ===== SCREEN: TOP (薬局選択) ===== -->
+<div class="screen active" id="screen-top">
+  <div class="top-header">
+    <h1>🏥 はやいおくすりやさん｜薬局管理</h1>
+    <div class="clock" id="top-clock"></div>
+  </div>
+  <div style="padding:28px 40px 4px">
+    <div style="font-size:1rem;font-weight:700;color:var(--sub)">ログイン先の薬局を選択してください</div>
+  </div>
+  <div class="pharma-grid" id="pharma-grid"></div>
+</div>
+
+<!-- ===== SCREEN: MAIN APP ===== -->
+<div class="screen" id="screen-main">
+  <div class="app-layout">
+    <!-- サイドバー -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">🏥 はやいおくすりやさん</div>
+        <div class="sidebar-pharma" id="sb-pharma-name">—</div>
+      </div>
+      <div class="sidebar-section">メニュー</div>
+      <button class="sidebar-btn active" id="btn-nav-rx" onclick="showPane('rx')">
+        <span class="icon">💊</span>処方箋受付
+        <span class="badge-count" id="sb-count">0</span>
+      </button>
+      <button class="sidebar-btn" id="btn-nav-list" onclick="showPane('list')">
+        <span class="icon">📋</span>受付データ一覧
+      </button>
+      <div class="sidebar-section">状況</div>
+      <button class="sidebar-btn" id="btn-nav-status" onclick="showPane('status')">
+        <span class="icon">📊</span>待ち状況確認
+      </button>
+      <div class="sidebar-bottom">
+        <button class="btn-back-top" onclick="backToTop()">← 薬局選択に戻る</button>
+      </div>
+    </div>
+
+    <!-- メインエリア -->
+    <div class="main-area">
+      <div class="main-topbar">
+        <div class="topbar-title" id="main-title">💊 処方箋受付</div>
+        <div class="topbar-right">
+          <div class="wait-summary">
+            <div class="ws-item">
+              <div class="ws-val" id="ws-people">0</div>
+              <div class="ws-lbl">待ち人数</div>
+            </div>
+            <div class="ws-item">
+              <div class="ws-val" id="ws-min">0</div>
+              <div class="ws-lbl">待ち時間（分）</div>
+            </div>
+          </div>
+          <div class="clock-display" id="main-clock"></div>
+        </div>
+      </div>
+      <div class="main-content" id="main-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 印刷モーダル -->
+<div class="modal-bg" id="print-modal" style="display:none" onclick="closePrintModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">処方箋プレビュー</div>
+      <button class="modal-close" onclick="closePrintModal()">✕</button>
+    </div>
+    <img class="rx-preview-img" id="modal-img" src="" alt="処方箋"/>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel no-print" onclick="closePrintModal()">閉じる</button>
+      <button class="btn-modal-print no-print" onclick="window.print()">🖨 印刷する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============== DATA ================
+const PHARMACIES=[
+  {id:1,name:'ファーマシィ薬局 大蔵',     dist:130,  wait:45},
+  {id:2,name:'砧3丁目薬局',              dist:160,  wait:15},
+  {id:3,name:'クリエイト薬局',           dist:200,  wait:20},
+  {id:4,name:'日本調剤 砧薬局',          dist:220,  wait:40},
+  {id:5,name:'ヤマグチ薬局砧店',         dist:800,  wait:10},
+  {id:6,name:'南山堂薬局 砧店',          dist:850,  wait:10},
+  {id:7,name:'ココカラファイン砧世田谷通り店',dist:350,wait:30},
+  {id:8,name:'マツモトキヨシ成城学園前',  dist:1800, wait:20},
+].sort((a,b)=>a.dist-b.dist);
+
+// =============== STATE ================
+let currentPharma=null;
+let rxList=[];       // {id,num,name,kana,img,arrivedAt,status:'waiting'|'done'}
+let allHistory=[];   // 全履歴
+let currentPane='rx';
+let counterMap={};   // date+hour+min -> count
+
+// =============== UTILS ================
+function nowStr(){
+  const d=new Date();
+  return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}${z(d.getHours())}${z(d.getMinutes())}`;
+}
+function z(n){return String(n).padStart(2,'0')}
+function zz(n){return String(n).padStart(3,'0')}
+function genNum(){
+  const key=nowStr();
+  counterMap[key]=(counterMap[key]||0)+1;
+  return key+zz(counterMap[key]);
+}
+function fmtNum(n){
+  // 202606011315001 -> 読みやすく
+  return n.replace(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/,'$1/$2/$3 $4:$5-$6');
+}
+function elapsed(arrivedAt){
+  const s=Math.floor((Date.now()-arrivedAt)/1000);
+  if(s<60) return s+'秒';
+  const m=Math.floor(s/60),sec=s%60;
+  if(m<60) return `${m}分${sec}秒`;
+  return `${Math.floor(m/60)}時間${m%60}分`;
+}
+function elapsedMin(arrivedAt){return (Date.now()-arrivedAt)/60000}
+function waitColor(min){return min<=15?'w-low':min<=30?'w-mid':'w-high'}
+function dateLabel(offset){
+  const d=new Date();d.setDate(d.getDate()-offset);
+  return `${d.getFullYear()}/${z(d.getMonth()+1)}/${z(d.getDate())}`;
+}
+function todayStr(){return dateLabel(0)}
+
+// =============== CLOCK ================
+function updateClock(){
+  const t=new Date().toLocaleTimeString('ja-JP');
+  document.querySelectorAll('#top-clock,#main-clock').forEach(el=>el&&(el.textContent=t));
+}
+setInterval(updateClock,1000);updateClock();
+
+// =============== TOP SCREEN ================
+(function buildTop(){
+  const grid=document.getElementById('pharma-grid');
+  PHARMACIES.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='pharma-tile';
+    d.innerHTML=`
+      <div class="pharma-tile-icon">🏥</div>
+      <div class="pharma-tile-name">${p.name}</div>
+      <div class="pharma-tile-dist">📍 ${p.dist}m</div>
+      <span class="pharma-tile-wait ${waitColor(p.wait)}">${p.wait}分待ち</span>
+    `;
+    d.onclick=()=>enterPharma(p);
+    grid.appendChild(d);
+  });
+})();
+
+function enterPharma(p){
+  currentPharma=p;
+  document.getElementById('sb-pharma-name').textContent=p.name;
+  updateWaitSummary();
+  injectDemoData(p);
+  document.getElementById('screen-top').classList.remove('active');
+  document.getElementById('screen-main').classList.add('active');
+  showPane('rx');
+}
+function backToTop(){
+  document.getElementById('screen-main').classList.remove('active');
+  document.getElementById('screen-top').classList.add('active');
+  rxList=[];allHistory=[];counterMap={};currentPharma=null;
+}
+
+// =============== DEMO DATA ================
+function injectDemoData(p){
+  // 既存の待ち人数をデモとして投入
+  const people=Math.ceil(p.wait/5);
+  const demoNames=[
+    ['田中 花子','タナカ ハナコ'],['鈴木 一郎','スズキ イチロウ'],
+    ['佐藤 美穂','サトウ ミホ'],['山田 太郎','ヤマダ タロウ'],
+    ['伊藤 彩子','イトウ アヤコ'],['渡辺 健','ワタナベ ケン'],
+    ['中村 幸子','ナカムラ サチコ'],['小林 誠','コバヤシ マコト'],
+  ];
+  const now=Date.now();
+  for(let i=0;i<Math.min(people,8);i++){
+    const [nm,kn]=demoNames[i%demoNames.length];
+    const arrivedAt=now-(people-i)*5*60*1000+(i*37000);
+    addRx(nm,kn,null,arrivedAt);
+  }
+}
+
+// =============== ADD RX ================
+function addRx(name,kana,img,arrivedAt){
+  arrivedAt=arrivedAt||Date.now();
+  const num=genNum();
+  const rx={id:num,num,name,kana,img,arrivedAt,status:'waiting',date:todayStr()};
+  rxList.push(rx);
+  allHistory.push({...rx});
+  if(currentPane==='rx') renderRxPane();
+  updateWaitSummary();
+  updateSideCount();
+}
+
+// =============== WAIT SUMMARY ================
+function updateWaitSummary(){
+  const waiting=rxList.filter(r=>r.status==='waiting').length;
+  document.getElementById('ws-people').textContent=waiting;
+  document.getElementById('ws-min').textContent=waiting*5;
+}
+function updateSideCount(){
+  const n=rxList.filter(r=>r.status==='waiting').length;
+  document.getElementById('sb-count').textContent=n;
+}
+
+// =============== PANE SWITCH ================
+function showPane(name){
+  currentPane=name;
+  document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
+  const map={rx:'btn-nav-rx',list:'btn-nav-list',status:'btn-nav-status'};
+  if(map[name]) document.getElementById(map[name])?.classList.add('active');
+  const titles={rx:'💊 処方箋受付',list:'📋 受付データ一覧',status:'📊 待ち状況確認'};
+  document.getElementById('main-title').textContent=titles[name]||'';
+  if(name==='rx')     renderRxPane();
+  else if(name==='list')  renderListPane();
+  else if(name==='status') renderStatusPane();
+}
+
+// =============== RX PANE ================
+function renderRxPane(){
+  const el=document.getElementById('main-content');
+  const waiting=rxList.filter(r=>r.status==='waiting');
+  const COLS=4,ROWS=2,SLOTS=COLS*ROWS;
+
+  let html=`<div class="tiles-header">
+    <div class="tiles-label">待ち処方箋（${waiting.length}件）</div>
+    <button class="btn-list" onclick="showPane('list')">📋 受付データ一覧 <span class="badge-count">${rxList.length}</span></button>
+  </div>
+  <div class="tiles-grid">`;
+
+  for(let i=0;i<SLOTS;i++){
+    if(i<waiting.length){
+      const rx=waiting[i];
+      const em=elapsedMin(rx.arrivedAt);
+      const pct=Math.min(em/(currentPharma?.wait||30)*100,100);
+      const barCls=pct<60?'':'pct<80?\'warn\'':'danger';
+      const barClass=pct<60?'':'pct<85?\'warn\'':'danger';
+      const finalBar=pct<60?'elapsed-bar':pct<85?'elapsed-bar warn':'elapsed-bar danger';
+      const isUrgent=pct>=90;
+      html+=`<div class="rx-tile${isUrgent?' urgent':''}" style="animation-delay:${i*.04}s">
+        <div class="rx-num" title="${rx.num}">${fmtNum(rx.num)}</div>
+        <div class="rx-name">${rx.kana}</div>
+        <div style="font-size:.78rem;color:var(--sub)">${rx.name}</div>
+        <div class="rx-elapsed">
+          <div class="elapsed-bar-wrap"><div class="${finalBar}" style="width:${pct.toFixed(1)}%"></div></div>
+          <div class="elapsed-text">${elapsed(rx.arrivedAt)}</div>
+        </div>
+        <div class="rx-btns">
+          <button class="btn-print" onclick="openPrint('${rx.id}')">🖨 処方箋印刷</button>
+          <button class="btn-done" onclick="markDone('${rx.id}')">✅ 処方済み</button>
+        </div>
+      </div>`;
+    } else {
+      html+=`<div class="empty-tile"><span>空き</span></div>`;
+    }
+  }
+  html+='</div>';
+
+  // 8枠超の場合 追加表示
+  if(waiting.length>SLOTS){
+    html+=`<div class="section-divider">さらに ${waiting.length-SLOTS} 件の待ち処方箋</div>
+    <div class="tiles-grid">`;
+    for(let i=SLOTS;i<waiting.length;i++){
+      const rx=waiting[i];
+      const em=elapsedMin(rx.arrivedAt);
+      const pct=Math.min(em/(currentPharma?.wait||30)*100,100);
+      const finalBar=pct<60?'elapsed-bar':pct<85?'elapsed-bar warn':'elapsed-bar danger';
+      html+=`<div class="rx-tile" style="animation-delay:${(i-SLOTS)*.04}s">
+        <div class="rx-num" title="${rx.num}">${fmtNum(rx.num)}</div>
+        <div class="rx-name">${rx.kana}</div>
+        <div style="font-size:.78rem;color:var(--sub)">${rx.name}</div>
+        <div class="rx-elapsed">
+          <div class="elapsed-bar-wrap"><div class="${finalBar}" style="width:${pct.toFixed(1)}%"></div></div>
+          <div class="elapsed-text">${elapsed(rx.arrivedAt)}</div>
+        </div>
+        <div class="rx-btns">
+          <button class="btn-print" onclick="openPrint('${rx.id}')">🖨 処方箋印刷</button>
+          <button class="btn-done" onclick="markDone('${rx.id}')">✅ 処方済み</button>
+        </div>
+      </div>`;
+    }
+    html+='</div>';
+  }
+  el.innerHTML=html;
+  startElapsedTimer();
+}
+
+// =============== 経過時間タイマー ================
+let elapsedTimer=null;
+function startElapsedTimer(){
+  clearInterval(elapsedTimer);
+  elapsedTimer=setInterval(()=>{ if(currentPane==='rx') renderRxPane(); },10000);
+}
+
+// =============== DONE ================
+function markDone(id){
+  const rx=rxList.find(r=>r.id===id);
+  if(!rx) return;
+  if(!confirm(`「${rx.name}」を処方済みにしますか？`)) return;
+  rx.status='done';
+  const h=allHistory.find(r=>r.id===id);
+  if(h) h.status='done';
+  renderRxPane();
+  updateWaitSummary();
+  updateSideCount();
+}
+
+// =============== PRINT MODAL ================
+function openPrint(id){
+  const rx=rxList.find(r=>r.id===id)||allHistory.find(r=>r.id===id);
+  if(!rx) return;
+  document.getElementById('modal-title').textContent=`処方箋：${rx.name}（${fmtNum(rx.num)}）`;
+  const img=document.getElementById('modal-img');
+  if(rx.img){
+    img.src=rx.img; img.style.display='block';
+  } else {
+    // デモ用ダミー
+    img.src='';img.style.display='none';
+    const placeholder=document.createElement('div');
+    placeholder.id='rx-placeholder';
+    placeholder.style=`background:#f9fafb;border:1px solid #e2e8f0;border-radius:8px;
+      min-height:240px;display:flex;align-items:center;justify-content:center;
+      flex-direction:column;gap:12px;color:#6b7280;font-size:1rem`;
+    placeholder.innerHTML=`<div style="font-size:3rem">📄</div>
+      <div style="font-weight:700">${rx.name} 様の処方箋</div>
+      <div style="font-size:.85rem">受付番号：${fmtNum(rx.num)}</div>
+      <div style="font-size:.82rem">（デモ：実際の画像データはここに表示されます）</div>`;
+    const old=document.getElementById('rx-placeholder');
+    if(old) old.remove();
+    document.querySelector('.modal').insertBefore(placeholder, document.querySelector('.modal-footer'));
+  }
+  document.getElementById('print-modal').style.display='flex';
+}
+function closePrintModal(e){
+  if(e&&e.target!==document.getElementById('print-modal')&&e.type==='click') return;
+  document.getElementById('print-modal').style.display='none';
+  const old=document.getElementById('rx-placeholder');if(old)old.remove();
+}
+
+// =============== LIST PANE ================
+let listOffset=0; // 0=今日, 1=昨日, ...
+let customDate='';
+function renderListPane(){
+  const el=document.getElementById('main-content');
+  const targetDate=customDate||dateLabel(listOffset);
+  const records=allHistory.filter(r=>r.date===targetDate);
+
+  el.innerHTML=`
+  <div class="list-panel">
+    <div class="list-toolbar">
+      <div class="date-slider-wrap">
+        <label>過去日付</label>
+        <input type="range" min="0" max="30" value="${listOffset}" id="date-slider"
+          oninput="listOffset=+this.value;customDate='';renderListPane()"/>
+        <div class="date-label">${targetDate}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="font-size:.78rem;color:var(--sub);font-weight:700">日付指定</label>
+        <input type="date" id="custom-date" value="${customDate}"
+          onchange="customDate=this.value;listOffset=0;renderListPane()"/>
+        ${customDate?`<button class="btn-datepick" onclick="customDate='';listOffset=0;renderListPane()">✕ クリア</button>`:''}
+      </div>
+      <div style="margin-left:auto;font-size:.82rem;color:var(--sub)">
+        全 ${records.length} 件 / 処方済 ${records.filter(r=>r.status==='done').length} 件
+      </div>
+    </div>
+    ${records.length===0?`<div style="padding:48px;text-align:center;color:var(--sub)">
+      <div style="font-size:2.5rem;margin-bottom:12px">📋</div>
+      <div>${targetDate} のデータはありません</div>
+    </div>`:
+    `<table class="list-table">
+      <thead><tr>
+        <th>受付番号</th><th>患者名</th><th>フリガナ</th>
+        <th>受付時刻</th><th>ステータス</th><th>処方箋</th>
+      </tr></thead>
+      <tbody>${records.map(r=>`
+        <tr>
+          <td style="font-size:.72rem;font-variant-numeric:tabular-nums">${fmtNum(r.num)}</td>
+          <td style="font-weight:700">${r.name}</td>
+          <td style="font-size:.8rem;color:var(--sub)">${r.kana}</td>
+          <td style="font-variant-numeric:tabular-nums">${new Date(r.arrivedAt).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}</td>
+          <td><span class="status-tag ${r.status==='done'?'st-done':r.status==='waiting'?'st-wait':'st-in'}">
+            ${r.status==='done'?'✅ 処方済み':'⏳ 待機中'}
+          </span></td>
+          <td><button class="btn-print" style="padding:4px 12px;font-size:.75rem" onclick="openPrint('${r.id}')">🖨 表示</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+  </div>`;
+}
+
+// =============== STATUS PANE ================
+function renderStatusPane(){
+  const el=document.getElementById('main-content');
+  const waiting=rxList.filter(r=>r.status==='waiting').length;
+  const done=rxList.filter(r=>r.status==='done').length;
+  const waitMin=waiting*5;
+  el.innerHTML=`
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+    ${[
+      ['待ち人数',waiting,'人','var(--green)'],
+      ['待ち時間',waitMin,'分','var(--warn)'],
+      ['処方済み',done,'件','var(--blue)'],
+      ['本日合計',rxList.length,'件','var(--sub)'],
+    ].map(([l,v,u,c])=>`
+    <div style="background:var(--card);border-radius:var(--rad);padding:20px 16px;text-align:center;border:1.5px solid var(--border)">
+      <div style="font-size:2.4rem;font-weight:900;color:${c};font-variant-numeric:tabular-nums">${v}</div>
+      <div style="font-size:.8rem;color:var(--sub);margin-top:4px">${l}（${u}）</div>
+    </div>`).join('')}
+  </div>
+  <div style="background:var(--card);border-radius:var(--rad);padding:20px 24px;border:1.5px solid var(--border)">
+    <div style="font-size:.85rem;font-weight:700;color:var(--sub);margin-bottom:16px;letter-spacing:.04em">待ち状況バー</div>
+    ${[0,10,20,30,40,50].map(i=>{
+      const cnt=rxList.filter(r=>r.status==='waiting'&&elapsedMin(r.arrivedAt)>=i&&elapsedMin(r.arrivedAt)<i+10).length;
+      return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="font-size:.78rem;color:var(--sub);width:60px;text-align:right">${i}〜${i+10}分</div>
+        <div style="flex:1;background:var(--border);border-radius:4px;height:18px;overflow:hidden">
+          <div style="width:${Math.min(cnt*25,100)}%;height:100%;background:${i<20?'var(--ok)':i<35?'var(--warn)':'var(--danger)'};border-radius:4px;display:flex;align-items:center;padding-left:8px">
+            ${cnt>0?`<span style="font-size:.72rem;color:#fff;font-weight:700">${cnt}人</span>`:''}
+          </div>
+        </div>
+        <div style="font-size:.78rem;font-weight:700;color:var(--sub);width:24px">${cnt}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// =============== EXTERNAL RX受信シミュレーション ================
+// ユーザーアプリからの処方箋到着をシミュレート（本番はWebSocket/API連携）
+window.receiveRx=function(name,kana,imgDataUrl){
+  if(!currentPharma){alert('薬局を選択してください');return;}
+  addRx(name||'患者様',kana||'カンジャサマ',imgDataUrl||null);
+  if(currentPane==='rx') renderRxPane();
+};
+
+// デモ：定期的にランダム受付を追加
+const DEMO_NAMES=[
+  ['木村 清','キムラ キヨシ'],['松本 春子','マツモト ハルコ'],
+  ['橋本 次郎','ハシモト ジロウ'],['加藤 里子','カトウ サトコ'],
+];
+let demoTimer=setInterval(()=>{
+  if(!currentPharma) return;
+  const [nm,kn]=DEMO_NAMES[Math.floor(Math.random()*DEMO_NAMES.length)];
+  addRx(nm,kn,null);
+  if(currentPane==='rx') renderRxPane();
+  if(currentPane==='list') renderListPane();
+},45000); // 45秒ごとに新規受付
+</script>
+</body>
+</html>
